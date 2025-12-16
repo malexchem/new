@@ -117,35 +117,33 @@ export async function PUT(
   }
 }
 */
+// app/api/suppliers/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import { Supplier } from '@/models/Supplier';
 import { User } from '@/models/User';
 
-// PUT - Admin verification (cookie-based)
+// PUT – admin verification
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } } // <- plain object, not Promise
+  { params }: { params: Promise<{ id: string }> }   // ← Promise-wrapped
 ) {
   try {
     await dbConnect();
 
-    // 🔐 Get admin from cookie
     const cookie = request.cookies.get('user');
     if (!cookie) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const adminData = JSON.parse(cookie.value);
-
     const admin = await User.findById(adminData.id);
     if (!admin || admin.role !== 'admin' || !admin.isActive) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     const { verificationStatus, verificationNotes } = await request.json();
-
-    const { id } = context.params; // <- now valid
+    const { id } = await params;                 // ← await the Promise
 
     const supplier = await Supplier.findByIdAndUpdate(
       id,
@@ -168,8 +166,8 @@ export async function PUT(
       supplier
     });
 
-  } catch (error) {
-    console.error('Error updating supplier verification:', error);
+  } catch (err) {
+    console.error(err);
     return NextResponse.json(
       { error: 'Failed to update supplier verification' },
       { status: 500 }
