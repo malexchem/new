@@ -125,7 +125,7 @@ import { User } from '@/models/User';
 // PUT - Admin verification (cookie-based)
 export async function PUT(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: { id: string } } // <- plain object, not Promise
 ) {
   try {
     await dbConnect();
@@ -145,7 +145,7 @@ export async function PUT(
 
     const { verificationStatus, verificationNotes } = await request.json();
 
-    const { id } = await context.params;
+    const { id } = context.params; // <- now valid
 
     const supplier = await Supplier.findByIdAndUpdate(
       id,
